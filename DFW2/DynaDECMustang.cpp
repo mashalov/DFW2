@@ -210,8 +210,8 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	// добавляем свойства форсировки
 	AddStateProperty(Serializer);
-	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty(CDevice::cszName_, TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(cszid_, TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty(m_cszUbf, VEnfOn, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszUef, VEnfOff, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszUbrf, VDefOn, eVARUNITS::VARUNIT_PU);

@@ -1717,7 +1717,7 @@ void CDynaNodeContainer::RequireSuperNodeLF(CDynaNodeBase *pSuperNode)
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(CDevice::cszname_, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
 	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eLFNodeType_, CDynaNodeBase::m_cszLFNodeTypeNames));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);

@@ -139,9 +139,9 @@ void CDynaPowerInjector::UpdateValidator(CSerializerValidatorRules* Validator)
 void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(CDevice::cszName_, TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
 	AddStateProperty(Serializer);
-	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszid_, TypedSerializedValue::eValueType::VT_ID, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddProperty(m_cszNodeId, NodeId, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddProperty(m_cszP, P, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);

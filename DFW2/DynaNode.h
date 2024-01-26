@@ -275,6 +275,8 @@ namespace DFW2
 		static constexpr const char* m_cszBsh = "bsh";
 		static constexpr const char* m_cszPload = "pn";
 		static constexpr const char* m_cszQload = "qn";
+		static constexpr const char* cszPload0_ = "pn0"; // нагрузка в начальных условиях (на чтение) 
+		static constexpr const char* cszQload0_ = "qn0"; // нагрузка в начальных условиях (на чтение)
 		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
 		static constexpr const char* m_cszS = "S";
 		static constexpr const char* m_cszSz = "Sz";

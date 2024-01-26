@@ -21,6 +21,7 @@ public:
 #ifdef _MSC_VER	
 	const wchar_t* whatw() const {	return (_whatw = stringutils::utf8_decode(what())).c_str();  }
 #endif	
+	static constexpr const char* cszNotImplemented_ = "Not implemented";
 };
 
 // добавляет к строке исключение информацию от GetLastError

@@ -322,12 +322,12 @@ namespace DFW2
 						// в почти всех контейнерах и таблицах
 						// есть состояния, поэтому для всех
 						// вводим "глобальный" синоним
-						if (serializervalue.first == CDevice::m_csz_state)
-							synonyms.insert(CDevice::m_cszSta);
+						if (serializervalue.first == CDevice::cszstate_)
+							synonyms.insert(CDevice::cszSta_);
 						// и еще синоним идентификатора в верхнем регистре
 						// (проблема в том что ток Id совпадает с Id, поэтому для 
 						// названия идентификатора выбран "id")
-						if (serializervalue.first == CDeviceId::m_cszid)
+						if (serializervalue.first == CDeviceId::cszid_)
 							synonyms.insert("Id");
 
 						// если в таблице синонимов есть пустая строка - пропускаем поле

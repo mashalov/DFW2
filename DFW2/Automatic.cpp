@@ -402,25 +402,32 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 				// Нужно привести заданные параметры для объекта к известным Raiden действиям
 				// получаем устройство по классу и ключу
 
-				CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) };
-				if (pDev)
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					// если устройство найдено, проверяем его тип по наследованию
 					// до известного автоматике типа
 					if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_NODE))
 					{
 						ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
-						if (pDev)
+						if (ObjectProp_ == CDevice::cszSta_)
 						{
-							if (ObjectProp_ == CDevice::m_cszSta)
-							{
-								Action_ = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
-								bRes = true;
-							}
+							Action_ = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
+							bRes = true;
 						}
+						else if (ObjectProp_ == CDynaNodeBase::cszPload0_)
+						{
+							throw dfw2error(dfw2error::cszNotImplemented_);
+							bRes = false;
+						}
+						else if (ObjectProp_ == CDynaNodeBase::cszQload0_)
+						{
+							throw dfw2error(dfw2error::cszNotImplemented_);
+							bRes = false;
+						}
+
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
-						if (ObjectProp_ == CDevice::m_cszSta)
+						if (ObjectProp_ == CDevice::cszSta_)
 						{
 							Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
 							bRes = true;
@@ -444,7 +451,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 					{
 						// для генератора отдельное состояние, но вообще можно состояния
 						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаково
-						if (ObjectProp_ == CDevice::m_cszSta)
+						if (ObjectProp_ == CDevice::cszSta_)
 						{
 							Action_ = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
 							bRes = true;
@@ -546,9 +553,9 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 
 void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)
 {
-	pSerializer->AddProperty(CDeviceId::m_cszid, Id_);
+	pSerializer->AddProperty(CDeviceId::cszid_, Id_);
 	pSerializer->AddProperty("Type", Type_);
-	pSerializer->AddProperty(CDevice::m_cszName, Name_);
+	pSerializer->AddProperty(CDevice::cszName_, Name_);
 }
 
 class CSerializerAction : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>

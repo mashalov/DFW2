@@ -510,13 +510,13 @@ namespace DFW2
 		// Ввернуть накопленное значение zero-crossing
 		ptrdiff_t GetDiscontinuityRequests() const { return DiscontinuityRequests_; }
 
-		static constexpr const char* m_cszName = "Name";
-		static constexpr const char* m_cszname = "name";
-		static constexpr const char* m_cszSta = "sta";
-		static constexpr const char* m_cszState = "State";
-		static constexpr const char* m_csz_state = "state";
-		static constexpr const char* m_cszStates[4] = { "Off", "On", "Ready", "Determine", };
-		static constexpr const std::array<const std::string_view, 3> StateAliases_ = { m_cszSta, m_cszState, m_csz_state };
+		static constexpr const char* cszName_ = "Name";
+		static constexpr const char* cszname_ = "name";
+		static constexpr const char* cszSta_ = "sta";
+		static constexpr const char* cszState_ = "State";
+		static constexpr const char* cszstate_ = "state";
+		static constexpr const char* cszStates_[4] = { "Off", "On", "Ready", "Determine", };
+		static constexpr const std::array<const std::string_view, 3> StateAliases_ = { cszSta_, cszState_, cszstate_ };
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;

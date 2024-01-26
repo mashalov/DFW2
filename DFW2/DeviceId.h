@@ -25,7 +25,7 @@ namespace DFW2
 		ptrdiff_t GetDBIndex() const noexcept;			//! получить индекс в БД
 		void SetDBIndex(ptrdiff_t nIndex) noexcept;		//! задать индекс в БД
 
-		static constexpr const char* m_cszid = "id";
+		static constexpr const char* cszid_ = "id";
 	};
 
 	// оператор для сортировки и поиска устройств. Упорядочивает по GetId

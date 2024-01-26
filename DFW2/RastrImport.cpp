@@ -710,8 +710,8 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	const std::map<long, std::pair<const std::string_view, const std::string_view>>
 		ActionCommandTypeArgs
 	{
-		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::m_cszSta } },
-		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::m_cszSta } },
+		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::cszSta_ } },
+		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::cszSta_ } },
 		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszGsh } },
 		{5 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszBsh} },
 		{6 , {CDeviceContainerProperties::m_cszAliasNode, "r"} },
@@ -724,8 +724,8 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	},
 	StarterTypeArgs
 	{
-		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::m_cszSta } },
-		{5 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::m_cszSta } },
+		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::cszSta_ } },
+		{5 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::cszSta_ } },
 		{6 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIb } },
 		{7 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIe } },
 		{8 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszPb } },

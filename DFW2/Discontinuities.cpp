@@ -327,16 +327,16 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 		NewState_ = CDynaBranch::BranchState::BRANCH_OFF;
 
 	WriteSlowVariable(pDynaModel, 
-		CDevice::m_cszState, 
+		CDevice::cszState_, 
 		Value, 
 		static_cast<double>(pDynaBranch_->BranchState_), 
 		pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
 			pDynaBranch_->GetVerbalName(),
-			CDevice::m_cszState,
+			CDevice::cszState_,
 			stringutils::enum_text(pDynaBranch_->BranchState_, CDynaBranch::m_cszBranchStateNames),
-			CDevice::m_cszState,
+			CDevice::cszState_,
 			stringutils::enum_text(NewState_, CDynaBranch::m_cszBranchStateNames)));
 
 	return Do(pDynaModel);
@@ -651,17 +651,17 @@ eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, dou
 
 	pDynaModel->WriteSlowVariable(pDevice_->GetType(),
 								{ pDevice_->GetId() },
-								CDevice::m_cszState,
+								CDevice::cszState_,
 								static_cast<double>(NewState_),
 								static_cast<double>(pDevice_->GetState()),
 								pDevice_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
 		pDevice_->GetVerbalName(),
-		CDevice::m_cszState,
-		stringutils::enum_text(pDevice_->GetState(), CDevice::m_cszStates),
-		CDevice::m_cszState,
-		stringutils::enum_text(NewState_, CDevice::m_cszStates)));
+		CDevice::cszState_,
+		stringutils::enum_text(pDevice_->GetState(), CDevice::cszStates_),
+		CDevice::cszState_,
+		stringutils::enum_text(NewState_, CDevice::cszStates_)));
 
 	return Do(pDynaModel);
 }

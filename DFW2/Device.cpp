@@ -1175,7 +1175,7 @@ void CDevice::UpdateValidator(CSerializerValidatorRules* Validator)
 
 void CDevice::AddStateProperty(CSerializerBase* Serializer)
 {
-	Serializer->AddProperty(CDevice::m_csz_state, TypedSerializedValue::eValueType::VT_STATE, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(CDevice::cszstate_, TypedSerializedValue::eValueType::VT_STATE, eVARUNITS::VARUNIT_UNITLESS);
 }
 
 VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)
