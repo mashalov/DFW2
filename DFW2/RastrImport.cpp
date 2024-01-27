@@ -1041,7 +1041,8 @@ void CRastrImport::UpdateRastrWinFile(CDynaModel& Network, std::string_view temp
 		{CDynaModel::Parameters::cszStepsToStepChange, "Количество шагов перед сменой шага метода интегрирования"},
 		{CDynaModel::Parameters::cszUseCOI, "Использовать систему координат синхронной зоны"},
 		{CDynaModel::Parameters::cszVarSearchStackDepth, "Глубина стека поиска переменных"},
-		{CDynaModel::Parameters::cszDiffEquationType, "Метод для дифференциальных уравнений"}
+		{CDynaModel::Parameters::cszDiffEquationType, "Метод для дифференциальных уравнений"},
+		{CDynaModel::Parameters::cszShortCircuitShuntMethod_, "Метод расчета шунта КЗ для Uост"}
 	};
 
 	IColPtr spNewCol;
