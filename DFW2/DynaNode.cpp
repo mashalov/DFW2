@@ -126,9 +126,6 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.Aliases_.push_back(CDynaNodeBase::cszAliasNode_);
-	props.ConstVarMap_.insert({ CDynaNode::cszGsh_, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaNode::cszBsh_, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-
 	props.bUseCOI = true;
 	props.SyncDeltaId = CDynaNode::C_SYNCDELTA;
 }

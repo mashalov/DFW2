@@ -265,7 +265,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//
 	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
 	m_spRastr->NewFile(dfwPath.c_str()); 
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_sc_uref.scn", scnPath.c_str());
+	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_p0q0.scn", scnPath.c_str());
 
 	//LoadFile("E:/Downloads/mdp_debug_1_400014 ошибка", rstPath);
 	//m_spRastr->NewFile(dfwPath.c_str()); 

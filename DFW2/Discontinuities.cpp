@@ -375,14 +375,61 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 	return State;
 }
 
-CModelActionChangeNodePQLoad::CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload) : CModelActionChangeNodeParameterBase(pNode),
-																						Pload_(Pload),
-																						InitialLoad_{pNode->Pn, pNode->Qn}
-{
 
+CModelActionChangeNodeQload::CModelActionChangeNodeQload(CDynaNode* pNode, double Qload) : 
+	CModelActionChangeNodeParameterBase(pNode),
+	Qload_(Qload),
+	InitialLoad_{ pNode->Pn, pNode->Qn } { }
+
+eDFW2_ACTION_STATE CModelActionChangeNodeQload::Do(CDynaModel* pDynaModel, double Value)
+{
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	const cplx Sload{ pDynaNode_->Pn, pDynaNode_->Qn };
+	const cplx SloadNew{ Sload.real(), Value };
+	Log(pDynaModel, fmt::format("{} Sload={} -> Sload={}",
+		pDynaNode_->GetVerbalName(),
+		Sload,
+		SloadNew
+	));
+
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszQload_, SloadNew.imag(), Sload.imag(), pDynaNode_->GetVerbalName());
+	pDynaNode_->Qn = SloadNew.imag();
+	if (pDynaModel->ChangeActionsAreCumulative())
+		pDynaModel->ProcessDiscontinuity();
+	pDynaNode_->ProcessTopologyRequest();
+	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, double Value)
+CModelActionChangeNodePload::CModelActionChangeNodePload(CDynaNode* pNode, double Pload) : 
+	CModelActionChangeNodeParameterBase(pNode),
+	Pload_(Pload),
+	InitialLoad_{ pNode->Pn, pNode->Qn } { }
+
+eDFW2_ACTION_STATE CModelActionChangeNodePload::Do(CDynaModel* pDynaModel, double Value)
+{
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	const cplx Sload{ pDynaNode_->Pn, pDynaNode_->Qn };
+	const cplx SloadNew{ Value, Sload.imag() };
+	Log(pDynaModel, fmt::format("{} Sload={} -> Sload={}",
+		pDynaNode_->GetVerbalName(),
+		Sload,
+		SloadNew
+	));
+
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszPload_, SloadNew.real(), Sload.real(), pDynaNode_->GetVerbalName());
+	pDynaNode_->Pn = SloadNew.real();
+	if (pDynaModel->ChangeActionsAreCumulative())
+		pDynaModel->ProcessDiscontinuity();
+	pDynaNode_->ProcessTopologyRequest();
+	return State;
+}
+
+CModelActionChangeNodePQload::CModelActionChangeNodePQload(CDynaNode* pNode, double Pload) : 
+	CModelActionChangeNodeParameterBase(pNode),
+	Pload_(Pload),
+	InitialLoad_{pNode->Pn, pNode->Qn} { }
+
+eDFW2_ACTION_STATE CModelActionChangeNodePQload::Do(CDynaModel* pDynaModel, double Value)
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 	const cplx Sload{ pDynaNode_->Pn, pDynaNode_->Qn };
@@ -407,7 +454,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, doub
 	// Новое значение получается после решения начальных условий. 
 	// Для того чтобы сэмулировать поведение RUSTab можно использовать глобальную обработку разрыва
 	// после каждого изменения. При этом изменяется и нагрузка узла от блока измерения, и значение действия по формуле выше.
-	// Работает за счет того, что нагрузка рассчитывается на CDynaNodeMeasure::ProcessDiscontinuuity,
+	// Работает за счет того, что нагрузка рассчитывается на CDynaNodeMeasure::ProcessDiscontinuity,
 	// а далее вызывается ProcessDiscontinuity в пользовательской модели автоматики/сценария.
 	// В результате Value в параметрах функции вычисляется еще раз с только что поставленной нагрузкой
 	// Медленно, но зато просто

@@ -67,9 +67,11 @@ namespace DFW2
 		// для именования индексов переменных
 		enum CONSTVARS
 		{
-			C_GSH,
+			C_GSH,			// шунт
 			C_BSH,
-			C_SYNCDELTA
+			C_SYNCDELTA,	// скольжение синхронной зоны
+			C_PLOAD0,		// нагрузка в начальных условиях (она же множитель СХН)
+			C_QLOAD0
 		};
 
 		enum VARS
@@ -268,6 +270,7 @@ namespace DFW2
 		std::pair<cplx, cplx> GetYI(ptrdiff_t Iteration);
 
 		static constexpr const char* cszV_ = "V";
+		static constexpr const char* cszAliasV_ = "vras";
 		static constexpr const char* cszDelta_ = "Delta";
 		static constexpr const char* cszVre_ = "Vre";
 		static constexpr const char* cszVim_ = "Vim";

@@ -161,13 +161,33 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeNodePQLoad : public CModelActionChangeNodeParameterBase
+	class CModelActionChangeNodePload : public CModelActionChangeNodeParameterBase
 	{
 	protected:
 		cplx InitialLoad_;
 		double Pload_;
 	public:
-		CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload);
+		CModelActionChangeNodePload(CDynaNode* pNode, double Pload);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
+	};
+
+	class CModelActionChangeNodeQload : public CModelActionChangeNodeParameterBase
+	{
+	protected:
+		cplx InitialLoad_;
+		double Qload_;
+	public:
+		CModelActionChangeNodeQload(CDynaNode* pNode, double Qload);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
+	};
+
+	class CModelActionChangeNodePQload : public CModelActionChangeNodeParameterBase
+	{
+	protected:
+		cplx InitialLoad_;
+		double Pload_;
+	public:
+		CModelActionChangeNodePQload(CDynaNode* pNode, double Pload);
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 

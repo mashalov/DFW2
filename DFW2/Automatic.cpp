@@ -416,13 +416,15 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 						}
 						else if (ObjectProp_ == CDynaNodeBase::cszPload0_)
 						{
-							throw dfw2error(dfw2error::cszNotImplemented_);
-							bRes = false;
+							// искусственное поле для множителя СХН нагрузки активной нагрузки
+							Action_ = std::make_unique<CModelActionChangeNodePload>(static_cast<CDynaNode*>(pDev), *pValue_);
+							bRes = true;
 						}
 						else if (ObjectProp_ == CDynaNodeBase::cszQload0_)
 						{
-							throw dfw2error(dfw2error::cszNotImplemented_);
-							bRes = false;
+							// искусственное поле для множителя СХН нагрузки реактивной нагрузки
+							Action_ = std::make_unique<CModelActionChangeNodeQload>(static_cast<CDynaNode*>(pDev), *pValue_);
+							bRes = true;
 						}
 
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
@@ -515,7 +517,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					Action_ = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *pValue_);
+					Action_ = std::make_unique<CModelActionChangeNodePQload>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;

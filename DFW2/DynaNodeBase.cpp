@@ -20,6 +20,8 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(Bshunt, C_BSH)
 		MAP_VARIABLE(Gshunt, C_GSH)
 		MAP_VARIABLE(SyncDelta_, C_SYNCDELTA)
+		MAP_VARIABLE(Pn, C_PLOAD0)
+		MAP_VARIABLE(Qn, C_QLOAD0)
 	}
 	return p;
 }
@@ -1617,8 +1619,13 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ CDynaNodeBase::cszVre_, CVarIndex(V_RE, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::cszVim_, CVarIndex(V_IM, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::cszV_, CVarIndex(V_V, VARUNIT_KVOLTS) });
-	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::cszV_ }});
+	props.VarAliasMap_.insert({ CDynaNodeBase::cszAliasV_ , { CDynaNodeBase::cszV_ }});
 	props.DeviceFactory = std::make_unique <CDeviceFactory<CDynaNodeBase>>();
+
+	props.ConstVarMap_.insert({ CDynaNode::cszGsh_, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::cszBsh_, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::cszPload0_, CConstVarIndex(CDynaNode::C_PLOAD0, VARUNIT_MW, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::cszQload0_, CConstVarIndex(CDynaNode::C_QLOAD0, VARUNIT_MVAR, eDVT_INTERNALCONST) });
 }
 
 void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
@@ -1721,7 +1728,7 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	AddStateProperty(Serializer);
 	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eLFNodeType_, CDynaNodeBase::cszLFNodeTypeNames_));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(CDynaNodeBase::cszAliasV_, V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
 	Serializer->AddProperty("pnr", Pn, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("qnr", Qn, eVARUNITS::VARUNIT_MVAR);
