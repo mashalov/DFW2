@@ -60,8 +60,45 @@ namespace DFW2
 	class CModelActionStop : public CModelAction
 	{
 	public:
-		CModelActionStop();
+		CModelActionStop() : CModelAction(eDFW2_ACTION_TYPE::AT_STOP) { }
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
+	};
+
+	class CModelActionChangeDeviceParameter : public CModelAction
+	{
+	protected:
+		CDevice* pDevice_ = nullptr;
+		template<typename T>
+		void Log(const CDynaModel* pDynaModel, std::string_view ValueName, const T& NewValue)
+		{
+			CModelAction::Log(pDynaModel, fmt::format("{} {}={}",
+				pDevice_->GetVerbalName(),
+				ValueName,
+				NewValue
+			));
+		}
+		template<typename T>
+		void Log(const CDynaModel* pDynaModel, std::string_view ValueName, const T& OldValue, const T& NewValue)
+		{
+			CModelAction::Log(pDynaModel, fmt::format("{} {}={} -> {}={}",
+				pDevice_->GetVerbalName(),
+				ValueName,
+				OldValue,
+				ValueName,
+				NewValue
+			));
+		}
+	public:
+		CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE Type, CDevice* pDevice) :
+			CModelAction(Type),
+			pDevice_(pDevice) {}
+	};
+
+
+	class CModelActionChangeDeviceVariable : public CModelActionChangeDeviceParameter
+	{
+	public:
+		CModelActionChangeDeviceVariable(CDevice* pDevice) : CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice) {}
 	};
 
 
@@ -77,23 +114,13 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeVariable : public CModelAction
+	class CModelActionChangeBranchParameterBase : public CModelActionChangeDeviceVariable
 	{
 	protected:
-		double TargetValue_;
-		double *pVariable_;
-	public:
-		CModelActionChangeVariable(double *pVariable, double TargetValue);
-		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
-	};
-
-	class CModelActionChangeBranchParameterBase : public CModelActionChangeVariable
-	{
-	protected:
-		CDynaBranch* pDynaBranch_;
+		inline CDynaBranch* Branch() { return static_cast<CDynaBranch*>(pDevice_);	}
 		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
-		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch) : CModelActionChangeVariable(nullptr, 0.0), pDynaBranch_(pBranch) {}
+		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch) : CModelActionChangeDeviceVariable(pBranch) {}
 	};
 
 	class CModelActionChangeBranchState : public CModelActionChangeBranchParameterBase
@@ -142,13 +169,13 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double B) override;
 	};
 
-	class CModelActionChangeNodeParameterBase : public CModelAction
+	class CModelActionChangeNodeParameterBase : public CModelActionChangeDeviceVariable
 	{
 	protected:
-		CDynaNode* pDynaNode_;
+		inline CDynaNode* Node() { return static_cast<CDynaNode*>(pDevice_); }
 		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
-		CModelActionChangeNodeParameterBase(CDynaNode *pNode) : CModelAction(eDFW2_ACTION_TYPE::AT_CV), pDynaNode_(pNode)  {}
+		CModelActionChangeNodeParameterBase(CDynaNode* pNode) : CModelActionChangeDeviceVariable(pNode) {}
 
 	};
 
@@ -166,7 +193,10 @@ namespace DFW2
 	protected:
 		cplx InitialLoad_;
 		double NewLoad_;
-		void Log(const CDynaModel* pDynaModel, const cplx& Sload, const cplx& SloadNew);
+		void Log(const CDynaModel* pDynaModel, const cplx& SloadOld, const cplx& SloadNew)
+		{
+			CModelActionChangeNodeParameterBase::Log(pDynaModel, "Sload", SloadOld, SloadNew);
+		}
 	public:
 		CModelActionChangeLoad(CDynaNode* pNode, double NewLoad) :
 			CModelActionChangeNodeParameterBase(pNode),
@@ -258,13 +288,16 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 		
-	class CModelActionChangeNodeLoad : public CModelActionChangeVariable
+	class CModelActionChangeNodeLoad : public CModelActionChangeNodeParameterBase
 	{
 	protected:
 		CDynaNode *pDynaNode_;
 		cplx newLoad_;
 	public:
-		CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& LoadPower);
+		CModelActionChangeNodeLoad(CDynaNode* pNode, cplx& LoadPower) :
+			CModelActionChangeNodeParameterBase(pNode),
+			pDynaNode_(pNode),
+			newLoad_(LoadPower) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
@@ -275,13 +308,15 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeDeviceState : public CModelActionChangeVariable
+	class CModelActionChangeDeviceState : public CModelActionChangeDeviceVariable
 	{
 	protected:
-		CDevice* pDevice_;
 		eDEVICESTATE NewState_;
 	public:
-		CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState);
+		CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState) :
+			CModelActionChangeDeviceVariable(pDevice),
+			NewState_(NewState) { }
+
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
 		virtual eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value);
 	};
