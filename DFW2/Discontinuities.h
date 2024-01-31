@@ -51,7 +51,7 @@ namespace DFW2
 		eDFW2_ACTION_TYPE Type() { return Type_;  }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) { return eDFW2_ACTION_STATE::AS_INACTIVE; }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) { return Do(pDynaModel,0); }
-		void Log(CDynaModel* pDynaModel, std::string_view message);
+		void Log(const CDynaModel* pDynaModel, std::string_view message);
 		static bool isfinite(const cplx& value) { return std::isfinite(value.real()) && std::isfinite(value.imag()); }
 	};
 
@@ -161,33 +161,37 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeNodePload : public CModelActionChangeNodeParameterBase
+	class CModelActionChangeLoad : public CModelActionChangeNodeParameterBase
 	{
 	protected:
 		cplx InitialLoad_;
-		double Pload_;
+		double NewLoad_;
+		void Log(const CDynaModel* pDynaModel, const cplx& Sload, const cplx& SloadNew);
 	public:
-		CModelActionChangeNodePload(CDynaNode* pNode, double Pload);
+		CModelActionChangeLoad(CDynaNode* pNode, double NewLoad) :
+			CModelActionChangeNodeParameterBase(pNode),
+			NewLoad_(NewLoad),
+			InitialLoad_{ pNode->Pn, pNode->Qn } { }
+	};
+
+	class CModelActionChangeNodePload : public CModelActionChangeLoad
+	{
+	public:
+		CModelActionChangeNodePload(CDynaNode* pNode, double Pload) : CModelActionChangeLoad(pNode, Pload) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
-	class CModelActionChangeNodeQload : public CModelActionChangeNodeParameterBase
+	class CModelActionChangeNodeQload : public CModelActionChangeLoad
 	{
-	protected:
-		cplx InitialLoad_;
-		double Qload_;
 	public:
-		CModelActionChangeNodeQload(CDynaNode* pNode, double Qload);
+		CModelActionChangeNodeQload(CDynaNode* pNode, double Qload) : CModelActionChangeLoad(pNode, Qload) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
-	class CModelActionChangeNodePQload : public CModelActionChangeNodeParameterBase
+	class CModelActionChangeNodePQload : public CModelActionChangeLoad
 	{
-	protected:
-		cplx InitialLoad_;
-		double Pload_;
 	public:
-		CModelActionChangeNodePQload(CDynaNode* pNode, double Pload);
+		CModelActionChangeNodePQload(CDynaNode* pNode, double Pload) : CModelActionChangeLoad(pNode, Pload) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
