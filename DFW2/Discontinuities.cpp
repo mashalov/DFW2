@@ -179,6 +179,16 @@ eDFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel)
 	return eDFW2_ACTION_STATE::AS_DONE;
 }
 
+void CModelActionChangeDeviceParameter::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
+{
+	pDynaModel->WriteSlowVariable(pDevice_->GetType(),
+		{ pDevice_->GetId() },
+		VariableName,
+		Value,
+		PreviousValue,
+		Description);
+}
+
 void CModelActionChangeBranchParameterBase::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
 {
 	pDynaModel->WriteSlowVariable(Branch()->GetType(),
@@ -188,17 +198,6 @@ void CModelActionChangeBranchParameterBase::WriteSlowVariable(CDynaModel* pDynaM
 		PreviousValue,
 		Description);
 }
-
-void CModelActionChangeNodeParameterBase::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
-{
-	pDynaModel->WriteSlowVariable(Node()->GetType(),
-		{ Node()->GetId()},
-		VariableName,
-		Value,
-		PreviousValue,
-		Description);
-}
-
 
 CModelActionChangeBranchState::CModelActionChangeBranchState(CDynaBranch *pBranch, enum CDynaBranch::BranchState NewState) :
 																									CModelActionChangeBranchParameterBase(pBranch),
@@ -211,7 +210,7 @@ CModelActionChangeBranchState::CModelActionChangeBranchState(CDynaBranch *pBranc
 eDFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
-	Log(pDynaModel, "Z", cplx(Branch()->R, Branch()->X), Impedance_);
+	Log(pDynaModel, CModelActionChangeBranchImpedance::cszz_, cplx(Branch()->R, Branch()->X), Impedance_);
 	CDevice::FromComplex(Branch()->R, Branch()->X, Impedance_);
 	Branch()->ProcessTopologyRequest();
 	return State;
@@ -314,9 +313,9 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 
 	const cplx rx{ 1.0 / cplx(Node()->Gshunt, Node()->Bshunt) };
 	if(CModelAction::isfinite(rx))
-		Log(pDynaModel, "Z", rx, ShuntRX_);
+		Log(pDynaModel, CModelActionChangeBranchImpedance::cszz_, rx, ShuntRX_);
 	else
-		Log(pDynaModel, "Z", ShuntRX_);
+		Log(pDynaModel, CModelActionChangeBranchImpedance::cszz_, ShuntRX_);
 
 	cplx y = 1.0 / ShuntRX_;
 	CDevice::FromComplex(Node()->Gshunt, Node()->Bshunt, y);
@@ -453,9 +452,9 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaMo
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 	const cplx y(Node()->Gshunt, Node()->Bshunt);
 	if (CModelAction::isfinite(y))
-		Log(pDynaModel, "Y", y, ShuntGB_);
+		Log(pDynaModel, CModelActionChangeNodeShuntAdmittance::cszy_, y, ShuntGB_);
 	else
-		Log(pDynaModel, "Y",  ShuntGB_);
+		Log(pDynaModel, CModelActionChangeNodeShuntAdmittance::cszy_,  ShuntGB_);
 
 	CDevice::FromComplex(Node()->Gshunt, Node()->Bshunt, ShuntGB_);
 	Node()->ProcessTopologyRequest();
@@ -500,24 +499,12 @@ eDFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 
 	const cplx y(Node()->Gshunt, Node()->Bshunt);
 	if(CModelAction::isfinite(y))
-		Log(pDynaModel, "Y", cplx(Node()->Gshunt, Node()->Bshunt), cplx(0,0) );
+		Log(pDynaModel, CModelActionChangeNodeShuntAdmittance::cszy_, cplx(Node()->Gshunt, Node()->Bshunt), cplx(0,0) );
 	else
-		Log(pDynaModel, "Y", cplx(0,0) );
+		Log(pDynaModel, CModelActionChangeNodeShuntAdmittance::cszy_, cplx(0,0) );
 
 	Node()->Gshunt = Node()->Bshunt = 0.0;
 	Node()->ProcessTopologyRequest();
-	return State;
-}
-
-
-
-eDFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
-{
-	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
-
-	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, newLoad_);
-
-	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 

@@ -41,33 +41,42 @@ namespace DFW2
 
 	class CDynaModel;
 
+	//! Базовое действие над моделью
 	class CModelAction
 	{
 	protected:
-		eDFW2_ACTION_TYPE Type_;
+		eDFW2_ACTION_TYPE Type_;		// тип действия
 	public:
 		CModelAction(eDFW2_ACTION_TYPE Type) : Type_(Type) {}
 		virtual ~CModelAction() = default;
-		eDFW2_ACTION_TYPE Type() { return Type_;  }
+		eDFW2_ACTION_TYPE Type() const { return Type_;  }
+		//! Дейтвие без параметра
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) { return eDFW2_ACTION_STATE::AS_INACTIVE; }
+		//! Действие с параметром
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) { return Do(pDynaModel,0); }
+		//! Вывод в протокол через CDynaModel со стандартизованным форматированием
 		void Log(const CDynaModel* pDynaModel, std::string_view message);
+		//! Хелпер для проверки задано комплексное значение или нет
 		static bool isfinite(const cplx& value) { return std::isfinite(value.real()) && std::isfinite(value.imag()); }
 	};
 
 	using ModelActionT = std::unique_ptr<CModelAction>;
 
+	//! Действие останова расчета
 	class CModelActionStop : public CModelAction
 	{
 	public:
 		CModelActionStop() : CModelAction(eDFW2_ACTION_TYPE::AT_STOP) { }
+		//! Действие просто выдает команду модели
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
+	//! Действие на изменение параметра устройства
 	class CModelActionChangeDeviceParameter : public CModelAction
 	{
 	protected:
-		CDevice* pDevice_ = nullptr;
+		CDevice* pDevice_ = nullptr;	// устройство, с которым нужно выполнить действие
+		//! Функция репорта "было-стало" с двумя параметрами до и после действия
 		template<typename T>
 		void Log(const CDynaModel* pDynaModel, std::string_view ValueName, const T& NewValue)
 		{
@@ -77,6 +86,7 @@ namespace DFW2
 				NewValue
 			));
 		}
+		//! Функция репорта "стало" с одним параметром после действия, на случай если было значение "не задано"
 		template<typename T>
 		void Log(const CDynaModel* pDynaModel, std::string_view ValueName, const T& OldValue, const T& NewValue)
 		{
@@ -92,9 +102,12 @@ namespace DFW2
 		CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE Type, CDevice* pDevice) :
 			CModelAction(Type),
 			pDevice_(pDevice) {}
+		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	};
 
-
+	//! Действие на изменение переменной устройства
+	/*! Враппер для CModelActionChangeDeviceParameter с типом действия "Изменить переменную"
+	*/
 	class CModelActionChangeDeviceVariable : public CModelActionChangeDeviceParameter
 	{
 	public:
@@ -114,15 +127,19 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
+	//! Базовый класс для действий с ветвями
 	class CModelActionChangeBranchParameterBase : public CModelActionChangeDeviceVariable
 	{
 	protected:
+		//! Хелпер с кастом наследованного pDevice_ в тип ветви
 		inline CDynaBranch* Branch() { return static_cast<CDynaBranch*>(pDevice_);	}
+		//! Отдельная реализация WriteSlowVariable для ветви со сложным ключом
 		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
 		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch) : CModelActionChangeDeviceVariable(pBranch) {}
 	};
 
+	//! Изменить состояния ветви
 	class CModelActionChangeBranchState : public CModelActionChangeBranchParameterBase
 	{
 	protected:
@@ -133,6 +150,7 @@ namespace DFW2
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value);
 	};
 
+	//! Изменить комплексное сопротивление ветви
 	class CModelActionChangeBranchImpedance : public CModelActionChangeBranchParameterBase
 	{
 	protected:
@@ -140,8 +158,10 @@ namespace DFW2
 	public:
 		CModelActionChangeBranchImpedance(CDynaBranch* pBranch, const cplx& Impedance) : CModelActionChangeBranchParameterBase(pBranch), Impedance_(Impedance) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
+		static constexpr const char* cszz_ = "z";
 	};
 
+	//! Изменить активное сопротвление ветви
 	class CModelActionChangeBranchR : public CModelActionChangeBranchParameterBase
 	{
 	protected:
@@ -151,6 +171,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double R) override;
 	};
 
+	//! Изменить реактивное сопротвление ветви
 	class CModelActionChangeBranchX : public CModelActionChangeBranchParameterBase
 	{
 	protected:
@@ -160,6 +181,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double X) override;
 	};
 
+	//! Изменить мнимую проводимость ветви
 	class CModelActionChangeBranchB : public CModelActionChangeBranchParameterBase
 	{
 	protected:
@@ -169,16 +191,18 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double B) override;
 	};
 
+	//! Базовый класс действий с узлом
 	class CModelActionChangeNodeParameterBase : public CModelActionChangeDeviceVariable
 	{
 	protected:
+		//! Хелпер с кастом наследованного pDevice_ в тип узла
 		inline CDynaNode* Node() { return static_cast<CDynaNode*>(pDevice_); }
-		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
 		CModelActionChangeNodeParameterBase(CDynaNode* pNode) : CModelActionChangeDeviceVariable(pNode) {}
 
 	};
 
+	//! Изменить комплексный шунт узла
 	class CModelActionChangeNodeShunt : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -188,6 +212,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
+	//! Изменить комплексную нагрузку узла
 	class CModelActionChangeLoad : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -204,6 +229,7 @@ namespace DFW2
 			InitialLoad_{ pNode->Pn, pNode->Qn } { }
 	};
 
+	//! Изменить активную нагрузку узла
 	class CModelActionChangeNodePload : public CModelActionChangeLoad
 	{
 	public:
@@ -211,6 +237,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
+	//! Изменить реактивную нагрузку узла
 	class CModelActionChangeNodeQload : public CModelActionChangeLoad
 	{
 	public:
@@ -218,6 +245,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
+	//! Изменить комплекную нагрузку узла по активной с сохранением тангенса
 	class CModelActionChangeNodePQload : public CModelActionChangeLoad
 	{
 	public:
@@ -225,6 +253,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
+	//! Изменить комплексный шунт узла
 	class CModelActionChangeNodeShuntAdmittance : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -232,8 +261,10 @@ namespace DFW2
 	public:
 		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, const cplx& ShuntGB) : CModelActionChangeNodeParameterBase(pNode), ShuntGB_(ShuntGB) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
+		static constexpr const char* cszy_ = "y";
 	};
 
+	//! Изменить активный шунт узла
 	class CModelActionChangeNodeShuntR : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -243,6 +274,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 
+	//! Изменить реактивный шунт узла
 	class CModelActionChangeNodeShuntX : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -252,6 +284,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 
+	//! Задать остаточное напряжение КЗ в узле
 	class CModelActionChangeNodeShuntToUscUref : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -261,6 +294,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
+	//! Задать отношение R/X КЗ в узле
 	class CModelActionChangeNodeShuntToUscRX : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -270,6 +304,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
+	//! Изменить активную проводимость узла
 	class CModelActionChangeNodeShuntG : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -279,6 +314,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 
+	//! Изменить реактивную проводимость узла
 	class CModelActionChangeNodeShuntB : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -287,20 +323,8 @@ namespace DFW2
 		CModelActionChangeNodeShuntB(CDynaNode* pNode, double B) : CModelActionChangeNodeParameterBase(pNode), NodeB_(B) { }
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
-		
-	class CModelActionChangeNodeLoad : public CModelActionChangeNodeParameterBase
-	{
-	protected:
-		CDynaNode *pDynaNode_;
-		cplx newLoad_;
-	public:
-		CModelActionChangeNodeLoad(CDynaNode* pNode, cplx& LoadPower) :
-			CModelActionChangeNodeParameterBase(pNode),
-			pDynaNode_(pNode),
-			newLoad_(LoadPower) {}
-		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
-	};
-
+	
+	//! Удалить заданный шунт узла
 	class CModelActionRemoveNodeShunt : public CModelActionChangeNodeParameterBase
 	{
 	public:
@@ -308,6 +332,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
+	//! Изменить состояние устройства
 	class CModelActionChangeDeviceState : public CModelActionChangeDeviceVariable
 	{
 	protected:
