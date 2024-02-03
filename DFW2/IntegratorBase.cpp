@@ -161,7 +161,7 @@ void IntegratorMultiStageBase::RejectStep()
 	{
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep,
-				DynaModel_.GetCurrentTime(),
+				DynaModel_.GetCurrentIntegrationTime(),
 				DynaModel_.GetIntegrationStepNumber(),
 				DynaModel_.Order(),
 				DynaModel_.H()));

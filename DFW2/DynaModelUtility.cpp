@@ -209,7 +209,7 @@ void CDynaModel::ServeDiscontinuityRequest()
 bool CDynaModel::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay)
 {
 	// для разрывов из отрицательного времени ставим выдержку относительно t=0.0
-	return m_Discontinuities.SetStateDiscontinuity(pDelayObject, (std::max)(GetCurrentTime(), 0.0) + dDelay);
+	return m_Discontinuities.SetStateDiscontinuity(pDelayObject, (std::max)(GetCurrentIntegrationTime(), 0.0) + dDelay);
 }
 
 bool CDynaModel::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)

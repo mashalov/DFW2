@@ -958,7 +958,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} V={} Border={}",
 				rH,
 				GetVerbalName(),
-				GetModel()->GetCurrentTime(),
+				GetModel()->GetCurrentIntegrationTime(),
 				Vcheck,
 				Border
 			));

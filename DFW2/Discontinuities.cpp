@@ -8,7 +8,7 @@ void CModelAction::Log(const CDynaModel* pDynaModel, std::string_view message)
 {
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format("{} t={} : {}",
 		CDFW2Messages::m_cszEvent,
-		pDynaModel->GetCurrentTime(),
+		pDynaModel->GetCurrentIntegrationTime(),
 		message
 	));
 }

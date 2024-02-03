@@ -199,7 +199,7 @@ void MixedAdamsBDF::RejectStep()
 	{
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, 
-				DynaModel_.GetCurrentTime(), 
+				DynaModel_.GetCurrentIntegrationTime(),
 				DynaModel_.GetIntegrationStepNumber(), 
 				DynaModel_.Order(),
 				DynaModel_.H()));
@@ -967,7 +967,7 @@ void MixedAdamsBDF::NewtonFailed()
 		//DynaModel_.SetH(DynaModel_.Hmin());
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, 
-				DynaModel_.GetCurrentTime(), 
+				DynaModel_.GetCurrentIntegrationTime(),
 				DynaModel_.GetIntegrationStepNumber(), 
 				DynaModel_.Order(), 
 				newH));
@@ -1219,7 +1219,7 @@ double MixedAdamsBDF::FindZeroCrossingToConst(const RightVector* pRightVector, d
 				rH,
 				pRightVector->pDevice->GetVerbalName(),
 				pRightVector->pDevice->VariableNameByPtr(pRightVector->pValue),
-				DynaModel_.GetCurrentTime(),
+				DynaModel_.GetCurrentIntegrationTime(),
 				pRightVector->Nordsiek[0],
 				pRightVector->Nordsiek[1],
 				pRightVector->Nordsiek[2],
@@ -1308,7 +1308,7 @@ double MixedAdamsBDF::FindZeroCrossingOfDifference(const RightVector* pRightVect
 				rH,
 				pRightVector1->pDevice->GetVerbalName(),
 				pRightVector1->pDevice->VariableNameByPtr(pRightVector1->pValue),
-				DynaModel_.GetCurrentTime(),
+				DynaModel_.GetCurrentIntegrationTime(),
 				pRightVector1->Nordsiek[0],
 				pRightVector1->Nordsiek[1],
 				pRightVector1->Nordsiek[2],

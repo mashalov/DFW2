@@ -138,7 +138,7 @@ void CDynaModel::WriteResults()
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 
-	const double CurrentTime{ GetCurrentTime() };
+	const double CurrentTime{ GetCurrentIntegrationTime() };
 	if (sc.m_bEnforceOut || CurrentTime >= TimeWritten_ + m_Parameters.m_dOutStep)
 	{
 		// пытаемся сделать начальное t0 = 0.0 если оно CurrentTime пришло с небольшой погрешностью

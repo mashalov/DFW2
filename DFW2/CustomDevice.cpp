@@ -231,7 +231,7 @@ void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
 
 void CCustomDeviceDataHost::SetModelData(CDynaModel* Model, CDevice* Device)
 {
-	*static_cast<CDFWModelData*>(this) = CDFWModelData{ Model, Device, Model->GetCurrentTime() };
+	*static_cast<CDFWModelData*>(this) = CDFWModelData{ Model, Device, Model->GetCurrentIntegrationTime() };
 }
 
 

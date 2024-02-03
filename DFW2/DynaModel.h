@@ -1115,7 +1115,7 @@ namespace DFW2
 		}
 
 		// возвращает текущее время интегрирования
-		inline double GetCurrentTime() const
+		inline double GetCurrentIntegrationTime() const
 		{
 			return sc.t;
 		}

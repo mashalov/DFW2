@@ -381,7 +381,7 @@ void CRastrImport::StoreResults(const CDynaModel& Network)
 		spResCols->Add(szTimeComputed, PropTT::PR_REAL);
 
 	IColPtr spTimeComputed{ spResCols->Item(szTimeComputed) };
-	spTimeComputed->PutZ(0, Network.GetCurrentTime());
+	spTimeComputed->PutZ(0, Network.GetCurrentIntegrationTime());
 
 	long MessageIndex{ spResCols->GetFind(szMessage) };
 	if (MessageIndex < 0)

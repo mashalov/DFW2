@@ -47,7 +47,7 @@ eDEVICEFUNCTIONSTATUS CTestDevice::Init(CDynaModel* pDynaModel)
 	A = x = 1.0;
 	const double Limit{ A / 2.0 };
 	omega = std::sqrt(k / m);
-	phi = -pDynaModel->GetCurrentTime() * omega;
+	phi = -pDynaModel->GetCurrentIntegrationTime() * omega;
 	OutputLag_.SetMinMax(pDynaModel, -Limit, Limit);
 	LagOut = (std::max)((std::min)(A, Limit), -Limit);
 	x = 1.0;
@@ -76,5 +76,5 @@ double* CTestDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 
 void CTestDevice::FinishStep(const CDynaModel& DynaModel)
 {
-	xref = A * cos(omega * DynaModel.GetCurrentTime() + phi);
+	xref = A * cos(omega * DynaModel.GetCurrentIntegrationTime() + phi);
 }
