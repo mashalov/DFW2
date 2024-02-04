@@ -164,7 +164,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 	}
 
 	// очень грубый  тест инициализации внешних переменных
-	//if(pDynaModel->GetCurrentTime() > 0.01)
+	//if(pDynaModel->GetCurrentIntegrationTime() > 0.01)
 	//	for (const auto& x : Primitives_)
 	//		if(x->Input().Indexed())
 	//			pDynaModel->GetRightVector(x->Input().Index);

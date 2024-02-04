@@ -170,7 +170,7 @@ void CDynaModel::WriteSlowVariable(ptrdiff_t nDeviceType,
 	m_ResultsWriter.AddSlowVariable(nDeviceType,
 		DeviceIds,
 		VariableName,
-		GetCurrentTime(),
+		GetCurrentIntegrationTime(),
 		Value,
 		PreviousValue,
 		ChangeDescription);

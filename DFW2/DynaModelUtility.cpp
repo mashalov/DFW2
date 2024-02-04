@@ -102,7 +102,7 @@ void CDynaModel::StopProcess()
 {
 	if (!bStopProcessing)
 	{
-		Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszStopCommandReceived, GetCurrentTime()));
+		Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszStopCommandReceived, GetCurrentIntegrationTime()));
 		bStopProcessing = true;
 	}
 }
@@ -545,7 +545,7 @@ bool CDynaModel::StabilityLost()
 			CDynaBranch* pBranch{ static_cast<CDynaBranch*>(dev) };
 			if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_ON) continue;
 			const auto ret = CheckAnglesCrossedPi(pBranch->pNodeIp_->Delta, pBranch->pNodeIq_->Delta, pBranch->deltaDiff);
-			sc.m_MaxBranchAngle.UpdateAbs(pBranch->deltaDiff, GetCurrentTime(), pBranch);
+			sc.m_MaxBranchAngle.UpdateAbs(pBranch->deltaDiff, GetCurrentIntegrationTime(), pBranch);
 			if (ret.first)
 			{
 				bStabilityLost = true;
@@ -555,7 +555,7 @@ bool CDynaModel::StabilityLost()
 				FinalMessage_ = fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
 					pBranch->GetVerbalName(),
 					ret.second,
-					GetCurrentTime());
+					GetCurrentIntegrationTime());
 
 				SyncLossCause_ = eSyncLossCause::BranchOOS;
 
@@ -582,7 +582,7 @@ bool CDynaModel::StabilityLost()
 					// и функция WrapPosNegPI (быстро и возможны проблемы)
 					//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
 					const auto ret(CheckAnglesCrossedPi(MathUtils::AngleRoutines::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
-					sc.m_MaxGeneratorAngle.UpdateAbs(pGen->deltaDiff, GetCurrentTime(), pGen);
+					sc.m_MaxGeneratorAngle.UpdateAbs(pGen->deltaDiff, GetCurrentIntegrationTime(), pGen);
 					if (ret.first)
 					{
 						bStabilityLost = true;
@@ -591,7 +591,7 @@ bool CDynaModel::StabilityLost()
 						FinalMessage_ = fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
 							pGen->GetVerbalName(),
 							ret.second,
-							GetCurrentTime());
+							GetCurrentIntegrationTime());
 
 						SyncLossCause_ = eSyncLossCause::GeneratorOOS;
 
@@ -615,10 +615,10 @@ bool CDynaModel::OscillationsDecayed()
 {
 	if (m_Parameters.m_bAllowDecayDetector)
 	{
-		m_OscDetector.check_pointed_values(GetCurrentTime(), Rtol(), Atol());
+		m_OscDetector.check_pointed_values(GetCurrentIntegrationTime(), Rtol(), Atol());
 		if (m_OscDetector.has_decay(static_cast<size_t>(m_Parameters.m_nDecayDetectorCycles)))
 		{
-			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentTime()));
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentIntegrationTime()));
 			return true;
 		}
 		else
@@ -1158,7 +1158,7 @@ void CDynaModel::DumpStatistics()
 
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Discontinuities processed {}, {} ahead",
 		sc.DiscontinuitiesProcessed_,
-		m_Discontinuities.EventsLeft(GetCurrentTime() + 0.9 * Hmin())));
+		m_Discontinuities.EventsLeft(GetCurrentIntegrationTime() + 0.9 * Hmin())));
 
 	if (sc.dMaxSLEResidual > 0.0)
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max SLE residual {} at time {}",
@@ -1242,7 +1242,7 @@ bool CDynaModel::ProcessOffStep()
 const std::string CDynaModel::TimeAndStep() const
 {
 	return fmt::format("t={:15.012f} {:>3}", 
-		GetCurrentTime(), 
+		GetCurrentIntegrationTime(), 
 		GetIntegrationStepNumber());
 }
 

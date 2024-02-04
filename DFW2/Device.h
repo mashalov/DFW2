@@ -26,6 +26,7 @@ namespace DFW2
 		inline T* operator->() noexcept { return *pointer; }
 		inline bool empty() const noexcept { return pointer == nullptr; }
 		inline operator T* () noexcept { return *pointer; };
+		inline void reset() noexcept { pointer = nullptr; }
 	};
 
 	// класс для хранения связей устройства

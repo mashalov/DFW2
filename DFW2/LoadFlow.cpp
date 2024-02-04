@@ -1422,7 +1422,7 @@ void CLoadFlow::UpdateQToGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		const  CLinkPtrCount* const  pGenLink{ pNode->GetLink(1) };
+		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
 		LinkWalker<CDynaPowerInjector> pGen;
 		if (pGenLink->Count())
 		{
@@ -1454,8 +1454,9 @@ void CLoadFlow::UpdateQToGenerators()
 						}
 						else if (pNode->IsLFTypeSlack())
 						{
-							double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
-							pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
+							// диапазона в базисном узле нет, просто
+							// рассчитываем сколько выдает каждый из генераторов
+							pGen->Q = pGen->Kgen * (pGen->LFQmin - pNode->LFQminGen + pNode->Qg / pGenLink->Count());
 							Qgmin += pGen->LFQmin;
 							Qgmax += pGen->LFQmax;
 							_CheckNumber(pGen->Q);
@@ -2894,6 +2895,8 @@ void CLoadFlow::CExtraNodes::Restore()
 {
 	for (const auto& svc : LoadFlow_.SVCs_)
 	{
+		// номер исходного узла УШР (ссылка могла быть заменена на суперузел)
+		const auto SVCNodeId{ static_cast<ptrdiff_t>(svc.SVC->NodeId) };
 		// проходим по ветвям искусственного узла (она одна)
 		for (const auto& vb : svc.ExtraNode->VirtualBranches())
 		{
@@ -2902,8 +2905,27 @@ void CLoadFlow::CExtraNodes::Restore()
 			const cplx Ig{ svc.ExtraNode->VreVim * vb.Y - vb.pNode->VreVim * vb.Y };
 			const cplx Sg{ vb.pNode->VreVim * std::conj(Ig) };
 			svc.SVC->Q = -Sg.imag();
+
+			// по умолчанию отдаем мощность УШР в узел, к которому ведет ссылка
+			auto SVCNode{ svc.OriginalNode };
+			// проверяем что номер узла, к которому подключен УШР
+			// совпадает с номером узла, к которому ведет ссылка
+			if (SVCNode->GetId() != SVCNodeId)
+			{
+				// если это не так - находим узел по номеру
+				// из множества узлов суперузла
+				const CLinkPtrCount* const pNodeLink{ SVCNode->GetSuperLink(0) };
+				LinkWalker<CDynaNodeBase> pSlaveNode;
+				while (pNodeLink->In(pSlaveNode))
+					if (pSlaveNode->GetId() == SVCNodeId)
+					{
+						SVCNode = pSlaveNode;
+						break;
+					}
+			}
+
 			// переносим мощность в генерацию узла
-			vb.pNode->Qg = (vb.pNode->Qgr -= svc.SVC->Q);
+			SVCNode->Qg = (SVCNode->Qgr -= svc.SVC->Q);
 			// восстанавливаем собственную проводимость
 			// контролируемого узла (корректировали в AllocateSVCs())
 			vb.pNode->YiiSuper += vb.Y;

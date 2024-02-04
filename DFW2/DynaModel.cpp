@@ -351,7 +351,7 @@ bool CDynaModel::RunTransient()
 					if (!CancelProcessing())
 					{
 						/*
-						if (GetCurrentTime() > 0.01)
+						if (GetCurrentIntegrationTime() > 0.01)
 							static_cast<CDynaGeneratorPark3C*>(*GeneratorsPark.begin())->Pt = 1650;
 							//static_cast<CDynaGeneratorMustang*>(*GeneratorsMustang.begin())->Pt = 1650;*/
 						
@@ -722,7 +722,7 @@ bool CDynaModel::Step()
 		if(sc.CurrentTimePlusStep() > dTimeNextEvent)
 		{
 			// если внутри шага есть события, настраиваем шаг на момент события
-			double rHit = (dTimeNextEvent - GetCurrentTime()) / H() * (1.0 - 1E-12);
+			double rHit = (dTimeNextEvent - GetCurrentIntegrationTime()) / H() * (1.0 - 1E-12);
 			//sc.t0 = dTimeNextEvent;
 			// если при этом настроенный коэффициент изменения шага больше погрешности
 			if (rHit > Consts::epsilon)
@@ -736,7 +736,7 @@ bool CDynaModel::Step()
 			else
 			{
 				// если время найденного события "точно" попадает во время текущего шага
-				if (std::abs(GetCurrentTime() - dTimeNextEvent) < Hmin())
+				if (std::abs(GetCurrentIntegrationTime() - dTimeNextEvent) < Hmin())
 				{
 					if (sc.m_bBeforeDiscontinuityWritten)
 					{
@@ -838,7 +838,7 @@ bool CDynaModel::Step()
 					if (rZeroCrossing < 0)
 						Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
 							rZeroCrossing,
-							GetCurrentTime()));
+							GetCurrentIntegrationTime()));
 
 					if (sc.m_bZeroCrossingMode)
 					{
@@ -911,7 +911,7 @@ bool CDynaModel::Step()
 				// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
 				LeaveDiscontinuityMode();
 				// удаляем события, который уже отработали по времени
-				m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
+				m_Discontinuities.PassTime(GetCurrentIntegrationTime() + 0.9 * Hmin());
 				sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
 				sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
 				sc.m_bBeforeDiscontinuityWritten = false;
@@ -1062,7 +1062,7 @@ double CDynaModel::CheckZeroCrossing()
 				it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at container \"{}\" at t={}",
 					Kh,
 					it->GetTypeName(),
-					GetCurrentTime()
+					GetCurrentIntegrationTime()
 				));
 		}
 	}

@@ -963,7 +963,7 @@ namespace DFW2
 		{
 			if (DebugLogFile.is_open())
 			{
-				DebugLogFile << GetCurrentTime() << ";";
+				DebugLogFile << GetCurrentIntegrationTime() << ";";
 				DebugLogFile << GetIntegrationStepNumber() << ";";
 				for (const auto& p : { vars... })
 					DebugLogFile << p.Value << ";";
@@ -1002,7 +1002,7 @@ namespace DFW2
 
 		void PassTime()
 		{
-			m_Discontinuities.PassTime(GetCurrentTime());
+			m_Discontinuities.PassTime(GetCurrentIntegrationTime());
 		}
 		
 		inline bool EstimateBuild() const

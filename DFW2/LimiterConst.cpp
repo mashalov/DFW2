@@ -35,7 +35,7 @@ void CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 	{
 		const auto prv{ pDynaModel->GetRightVector(m_Output.Index) };
 		m_Device.DebugLog(fmt::format("t={} / {} I={} O={} State={} {} {} {}",
-			pDynaModel->GetCurrentTime(),
+			pDynaModel->GetCurrentIntegrationTime(),
 			pDynaModel->GetIntegrationStepNumber(),
 			m_Input, m_Output, GetCurrentState(), prv->Nordsiek[0], prv->Nordsiek[1], prv->Nordsiek[2]));
 	}

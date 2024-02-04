@@ -120,7 +120,6 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 																		   pBranch->key.Iq,
 																		   pBranch->key.Np));
 					bRes = false;
-					_ASSERTE(bRes);
 				}
 			}
 
