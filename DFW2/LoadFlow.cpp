@@ -1410,7 +1410,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 void CLoadFlow::UpdateQToGenerators()
 {
-	bool bAllOk(true);
+	bool bAllOk{ true };
 
 	if (!pNodes->CheckLink(1))
 		return;	// если генераторов нет - выходим
@@ -1424,59 +1424,85 @@ void CLoadFlow::UpdateQToGenerators()
 
 		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
 		LinkWalker<CDynaPowerInjector> pGen;
+
+		std::list<CDynaPowerInjector*> PSlackGens, QSlackGens, QRangeGens;
 		if (pGenLink->Count())
 		{
-			const double Qrange{ pNode->LFQmax - pNode->LFQmin };
+			const double NodeQrange{ pNode->LFQmax - pNode->LFQmin };
 			double Qspread(0.0), Qgmin(0.0), Qgmax(0.0);
 
 			while (pGenLink->In(pGen))
 			{
+				if (!pGen->IsStateOn())
+				{
+					pGen->Q = 0.0;		// отключенные генераторы 
+					continue;			// просто обнуляются
+				}
 
-				if (pGen->IsKindOfType(DEVTYPE_SVC) && pGen->IsStateOn())
+				if (pGen->IsKindOfType(DEVTYPE_SVC))
+				{
 					Qspread -= pGen->Q; // мощности компенсаторов уже рассчитаны
-										// поэтому просто изымаем их из диапазона
+					continue;			// поэтому просто изымаем их из диапазона
+				}
+
+				if (pGen->LFQmin == 0.0 && pGen->LFQmax == 0.0)
+					QSlackGens.emplace_back(pGen);	// генераторы без диапазона
+				else
+					QRangeGens.emplace_back(pGen);
+
+				pGen->Q = 0.0;
+			}
+
+			for (auto&& gen : QRangeGens)
+			{
+				if (NodeQrange > 0.0)
+				{
+					gen->Q = gen->Kgen * (gen->LFQmin + (gen->LFQmax - gen->LFQmin) / NodeQrange * (pNode->Qg - pNode->LFQmin));
+					Qgmin += gen->LFQmin;
+					Qgmax += gen->LFQmax;
+					_CheckNumber(gen->Q);
+				}
 				else
 				{
-					pGen->Q = 0.0;
-					if (pGen->IsStateOn())
-					{
-						if (Qrange > 0.0)
-						{
-							pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
-							Qgmin += pGen->LFQmin;
-							Qgmax += pGen->LFQmax;
-							_CheckNumber(pGen->Q);
-						}
-						else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
-						{
-							pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->Count();
-							pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->Count();
-						}
-						else if (pNode->IsLFTypeSlack())
-						{
-							// диапазона в базисном узле нет, просто
-							// рассчитываем сколько выдает каждый из генераторов
-							pGen->Q = pGen->Kgen * (pGen->LFQmin - pNode->LFQminGen + pNode->Qg / pGenLink->Count());
-							Qgmin += pGen->LFQmin;
-							Qgmax += pGen->LFQmax;
-							_CheckNumber(pGen->Q);
-						}
-						else if (Qrange < Parameters.Imb)
-						{
-							// если у генератора пустой диапазон,
-							// пишем в него его Qmin
-							pGen->Q = pGen->Kgen * pGen->LFQmin;
-							Qgmin += pGen->LFQmin;
-							Qgmax += pGen->LFQmax;
-							_CheckNumber(pGen->Q);
-						}
-						else
-							pGen->Q = 0.0;
-
-						Qspread += pGen->Q;
-					}
+					gen->Q = gen->Kgen * (gen->LFQmin + (pNode->Qg - pNode->LFQmin) / QRangeGens.size());
+					Qgmin += gen->Q;
+					Qgmax += gen->Q;
 				}
+				Qspread += gen->Q;
 			}
+
+			// если есть балансирующие по Q генераторы - распределяем в них весь оставшийся небаланс поровну
+			const auto QspreadSource{ Qspread };
+			for (auto&& gen : QSlackGens)
+			{
+				Qgmin = Qgmax = gen->Q = gen->Kgen * ((pNode->Qg - QspreadSource) / QSlackGens.size());
+				Qspread += gen->Q;
+				Qgmin += gen->LFQmin;
+				Qgmax += gen->LFQmax;
+			}
+
+			// если узел балансирующий, распределяем активную мощность по генераторам
+			// пропорционально Pном
+			if (pNode->IsLFTypeSlack())
+			{
+				// собираем все включенные генераторы в общий список
+				QRangeGens.splice(QRangeGens.end(), QSlackGens);
+				double Psum{ 0.0 };
+				// рассчитываем общую мощность генераторов в исходном режиме
+				for (auto&& gen : QRangeGens)
+					Psum += std::abs(gen->P);
+				// если генераторы были нагружены в исходном режиме
+				// распределяем мощность из базисного узла
+				// пропорционально нагрузке, иначе просто поровну
+				for (auto&& gen : QRangeGens)
+					if (Psum > 0.0)
+						gen->P *= pNode->Pgr / Psum;
+					else
+						gen->P = pNode->Pgr / QRangeGens.size();
+
+
+			}
+
 			if (std::abs(pNode->Qg - Qspread) > Parameters.Imb)
 			{
 				pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForNode,

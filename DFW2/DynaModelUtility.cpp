@@ -829,12 +829,12 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 			CDevice* pFindDevice{ nullptr };
 			if (container->GetType() == DEVTYPE_BRANCH)
 			{
-				ptrdiff_t nIp(0), nIq(0), nNp(0);
+				ptrdiff_t nIp{ 0 }, nIq{ 0 }, nNp{ 0 };
 				bool bReverse = false;
 #ifdef _MSC_VER
-				ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+				const ptrdiff_t nKeysCount{ sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp) };
 #else
-				ptrdiff_t nKeysCount = sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+				const ptrdiff_t nKeysCount{ sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp) };
 #endif
 				if (nKeysCount > 1)
 				{
@@ -850,7 +850,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 			else
 			{
 				// контейнер с одним ключом
-				ptrdiff_t nId(0);
+				ptrdiff_t nId{ 0 };
 #ifdef _MSC_VER
 				if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
 #else
