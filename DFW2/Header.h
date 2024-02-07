@@ -50,6 +50,10 @@ namespace DFW2
 		{
 			return std::abs(x - y) <= epsilon;
 		}
+		static inline bool Zero(const double& x)
+		{
+			return std::abs(x) <= epsilon;
+		}
 	};
 
 //#define USE_FMA_FULL

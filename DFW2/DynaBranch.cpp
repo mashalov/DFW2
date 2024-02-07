@@ -48,7 +48,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 #ifdef ZMIN_RASTRWIN
 	// В RastrWin минимальное сопротивление вводится только для R = 0.0, X = 0.0
 	// но при этом сопротивление может оказаться меньше минимального
-	if (Rf == 0.0 && Xf == 0.0)
+	if (Consts::Zero(Rf) && Consts::Zero(Xf))
 		Xf = Xfictive;
 #else
 	// Другой вариант - контролировать минимальное сопротивление составляющих
