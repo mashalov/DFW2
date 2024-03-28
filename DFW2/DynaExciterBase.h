@@ -62,6 +62,8 @@ namespace DFW2
 		static constexpr const char* cszUdec_ = "Vdec";
 		static constexpr const char* cszExcConId_ = "ExcControlId";
 		static constexpr const char* cszDECId_ = "ForcerId";
+		static constexpr const char* cszUaux_ = "Uaux";
+		static constexpr const char* cszAliasExciter_ = "Exciter";
 
 	};
 }

@@ -112,14 +112,13 @@ namespace DFW2
 	{
 	protected:
 		double *pVariable_ = nullptr;
+		std::string VariableName_;
 	public:
 		CModelActionChangeDeviceVariable(CDevice* pDevice) : CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice) {}
-		CModelActionChangeDeviceVariable(CDevice* pDevice, std::string_view VariableName) : CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice) 
-		{
-			pVariable_ = pDevice->GetConstVariablePtr(VariableName);
-		}
+		CModelActionChangeDeviceVariable(CDevice* pDevice, std::string_view VariableName);
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
+		inline bool Initialized() const { return pVariable_ != nullptr; }
 	};
 
 

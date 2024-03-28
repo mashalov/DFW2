@@ -509,6 +509,20 @@ eDFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 }
 
 
+CModelActionChangeDeviceVariable::CModelActionChangeDeviceVariable(CDevice* pDevice, std::string_view VariableName) :
+	CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice),
+	VariableName_(VariableName) 
+{ 
+	pVariable_ = pDevice->GetConstVariablePtr(VariableName_);
+	if (!pVariable_)
+		pDevice->Log(DFW2MessageStatus::DFW2LOG_ERROR, 
+			fmt::format(CDFW2Messages::m_cszConstVarNotFoundInDevice, 
+				fmt::format("{}/{}", CDFW2Messages::m_cszAutomaticName, CDFW2Messages::m_cszScenarioName),
+				VariableName_, 
+				pDevice->GetVerbalName())
+		);
+}
+
 eDFW2_ACTION_STATE CModelActionChangeDeviceVariable::Do(CDynaModel* pDynaModel)
 {
 	return eDFW2_ACTION_STATE::AS_DONE;
@@ -516,14 +530,21 @@ eDFW2_ACTION_STATE CModelActionChangeDeviceVariable::Do(CDynaModel* pDynaModel)
 
 eDFW2_ACTION_STATE CModelActionChangeDeviceVariable::Do(CDynaModel* pDynaModel, double Value)
 {
-	if (pVariable_)
+	if (Initialized())
 	{
+		const double OldValue{ *pVariable_ };
 		*pVariable_ = Value;
+		WriteSlowVariable(pDynaModel, VariableName_, Value, OldValue, fmt::format("{}:{} = {}", 
+			pDevice_->GetVerbalName(),
+			VariableName_,
+			Value));
+		Log(pDynaModel, VariableName_, OldValue, Value);
 		pDynaModel->DiscontinuityRequest(*pDevice_, DiscontinuityLevel::Light);
+		return eDFW2_ACTION_STATE::AS_DONE;
 	}
-	return eDFW2_ACTION_STATE::AS_DONE;
+	else
+		return eDFW2_ACTION_STATE::AS_ERROR;
 }
-
 
 CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAction(eDFW2_ACTION_TYPE::AT_STATE),
 																	   pDiscreteDelay_(pDiscreteDelay)

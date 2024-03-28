@@ -387,7 +387,6 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDevice)
 {
-	bool bRes{ false };
 	_ASSERTE(!Action_);
 	_ASSERTE(!pValue_);
 	const std::string strVarName{ fmt::format(cszActionTemplate, Id_) };
@@ -410,60 +409,34 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 					{
 						ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 						if (ObjectProp_ == CDevice::cszSta_)
-						{
 							Action_ = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
-							bRes = true;
-						}
 						else if (ObjectProp_ == CDynaNodeBase::cszPload0_)
-						{
 							// искусственное поле для множителя СХН нагрузки активной нагрузки
 							Action_ = std::make_unique<CModelActionChangeNodePload>(static_cast<CDynaNode*>(pDev), *pValue_);
-							bRes = true;
-						}
 						else if (ObjectProp_ == CDynaNodeBase::cszQload0_)
-						{
 							// искусственное поле для множителя СХН нагрузки реактивной нагрузки
 							Action_ = std::make_unique<CModelActionChangeNodeQload>(static_cast<CDynaNode*>(pDev), *pValue_);
-							bRes = true;
-						}
 
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
 						if (ObjectProp_ == CDevice::cszSta_)
-						{
 							Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
-							bRes = true;
-						}
 						else if (ObjectProp_ == CDynaNodeBase::cszr_)
-						{
 							Action_ = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *pValue_);
-							bRes = true;
-						}
 						else if (ObjectProp_ == CDynaNodeBase::cszx_)
-						{
 							Action_ = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *pValue_);
-							bRes = true;
-						}
 						else if (ObjectProp_ == CDynaNodeBase::cszb_)
-						{
 							Action_ = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *pValue_);
-							bRes = true;
-						}
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER))
 					{
 						// для генератора отдельное состояние, но вообще можно состояния
 						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаково
 						if (ObjectProp_ == CDevice::cszSta_)
-						{
 							Action_ = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
-							bRes = true;
-						}
 					}
-					else if (pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_EXCITER))
-					{
-						Action_ = std::make_unique<CModelActionChangeDeviceVariable>(pDev, CAutoModelLink::ObjectProp_);
-						bRes = true;
-					}
+					else
+						if(auto CheckAction{ std::make_unique<CModelActionChangeDeviceVariable>(pDev, CAutoModelLink::ObjectProp_) } ; CheckAction->Initialized())
+							Action_ = std::move(CheckAction);
 				}
 				break;
 			}
@@ -471,80 +444,56 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			{
 				ObjectClass_ = CDynaBranch::cszAliasBranch_;
 				if (CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()); pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
-					bRes = true;
-				}
 				break;
 			}
 			case 4:	// g-шунт узла
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 5: // b-шунт узла
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 6:	// r-шунт узла
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 7:	// x-шунт узла
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 13: // PnQn0 - узел
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodePQload>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 19: // Шунт по остаточному напряжению - Uост
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscUref>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			case 20: // Шунт по остаточному напряжению  - R/X
 			{
 				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
-				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscRX>(static_cast<CDynaNode*>(pDev), *pValue_);
-					bRes = true;
-				}
 				break;
 			}
 			default:
@@ -555,7 +504,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 	else
 		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName));
 
-	return bRes;
+	return Action_ != nullptr;
 }
 
 void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)

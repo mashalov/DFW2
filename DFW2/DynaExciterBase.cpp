@@ -96,7 +96,7 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_EXCITER);
 	props.SetType(DEVTYPE_EXCITER_MUSTANG);
-	props.Aliases_.push_back("Exciter");
+	props.Aliases_.push_back(cszAliasExciter_);
 
 	props.AddLinkFrom(DEVTYPE_GEN_DQ, DLM_SINGLE, DPD_MASTER);
 	props.AddLinkTo(DEVTYPE_DEC, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::cszDECId_);
@@ -106,5 +106,9 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::cszExcConId_, CConstVarIndex(CDynaExciterBase::C_REGID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
 	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::cszDECId_, CConstVarIndex(CDynaExciterBase::C_DECID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
-	props.ConstVarMap_.insert(std::make_pair("Udop2", CConstVarIndex(CDynaExciterBase::C_UAUX, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::cszUaux_, CConstVarIndex(CDynaExciterBase::C_UAUX, VARUNIT_PU, eDVT_INTERNALCONST)));
+
+	props.VarAliasMap_.insert({
+		{ "Udop2", CDynaExciterBase::cszUaux_ }
+		});
 }

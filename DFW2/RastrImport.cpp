@@ -264,13 +264,13 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
 	//
 	//LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
-	//LoadFile("e:/downloads/ДРМ-Охрименко/park_efd.rst");
-	//LoadFile("e:/downloads/ДРМ-Охрименко/park_efd.scn", scnPath.c_str());
-	//m_spRastr->NewFile(dfwPath.c_str()); 
+	LoadFile("e:/downloads/ДРМ-Охрименко/park_efd.rst");
+	LoadFile("e:/downloads/ДРМ-Охрименко/park_efd.scn", scnPath.c_str());
+	m_spRastr->NewFile(dfwPath.c_str()); 
 	//m_spRastr->NewFile(scnPath.c_str());
-	LoadFile("e:/downloads/bugggs/модель.rst");
-	m_spRastr->NewFile(dfwPath.c_str());
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_p0q0.scn", scnPath.c_str());
+	//LoadFile("e:/downloads/bugggs/модель.rst");
+	//m_spRastr->NewFile(dfwPath.c_str());
+	//LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_p0q0.scn", scnPath.c_str());
 
 	//LoadFile("E:/Downloads/mdp_debug_1_400014 ошибка", rstPath);
 	//m_spRastr->NewFile(dfwPath.c_str()); 
@@ -498,7 +498,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPark3C_, cszAliasGenerator_);
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPark4C_, cszAliasGenerator_);
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPowerInjector_, cszAliasGenerator_);
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameExciterMustang_, "Exciter");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameExciterMustang_, CDynaExciterBase::cszAliasExciter_);
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameDECMustang_, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameExcConMustang_, "ExcControl");
 

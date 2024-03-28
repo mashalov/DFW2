@@ -90,6 +90,12 @@ namespace ResultFileTest
                 rootNode.Expand();
                 Text = $"Name {resultRead.Comment} Version {resultRead.Version} Channels {resultRead.Channels} Points {resultRead.Points} Ratio {resultRead.CompressionRatio} ";
 
+                Dictionary<int, string> typenames = new Dictionary<int, string>();
+
+                foreach(var Type in resultRead.Types)
+                    typenames.Add(Type.Id, Type.Name);
+
+
                 foreach (ResultFileLib.SlowVariable slowVar in resultRead.SlowVariables)
                 {
                     var Graph = slowVar.Plot;
@@ -99,7 +105,13 @@ namespace ResultFileTest
                         for (int i = 0; i < table.GetLength(0); i++)
                         {
                             double dTime = (double)table[i, 1];
-                            string strTimeDescr = $"{table[i, 2]}.{slowVar.Name}={table[i,0]}";
+                            string strTimeDescr = table[i, 2].ToString();
+                            if(string.IsNullOrWhiteSpace(strTimeDescr))
+                            {
+                                var DeviceType = $"{slowVar.DeviceType}";
+                                typenames.TryGetValue(slowVar.DeviceType, out DeviceType);
+                                strTimeDescr = $"{DeviceType}[{slowVar.DeviceIds}].{slowVar.Name}={table[i, 0]}";
+                            }
                             if (dTime >= 0.0)
                                 rastrChart.AddMarker(slowVar.DeviceType, slowVar.DeviceType, 0, strTimeDescr, dTime);
                         }

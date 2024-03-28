@@ -271,7 +271,7 @@ namespace DFW2
 		void ReadLRCs(CDynaLRCContainer& container);
 
 		// Читаем контейнер из таблицы RastrWin
-		void ReadTable(CDeviceContainer& Container, std::string_view RastrSelection = "")
+		void ReadTable(CDeviceContainer& Container, std::string_view RastrSelection = {})
 		{
 			const auto containerClass = Container.GetSystemClassName();
 			// находим синнонимы названий контейнера для Rastr
