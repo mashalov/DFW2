@@ -31,10 +31,11 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_REGID,
-			C_DECID
+			C_DECID,
+			C_UAUX
 		};
 
-		double DECId, RegId;
+		double DECId, RegId, Uaux = 0;
 
 		VariableIndex Eqe, Eqsum, EqeV, EqeLag;
 		double Eqe0, Ig0, Eq0, Ug0, Eqnom, Inom;

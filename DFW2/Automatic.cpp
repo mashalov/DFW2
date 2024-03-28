@@ -459,6 +459,11 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 							bRes = true;
 						}
 					}
+					else if (pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_EXCITER))
+					{
+						Action_ = std::make_unique<CModelActionChangeDeviceVariable>(pDev, CAutoModelLink::ObjectProp_);
+						bRes = true;
+					}
 				}
 				break;
 			}

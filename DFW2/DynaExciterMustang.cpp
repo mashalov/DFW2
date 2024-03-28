@@ -80,7 +80,7 @@ void CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 
 void CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	const double dEqsum{ Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec) };
+	const double dEqsum{ Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec + Uaux) };
 	// Для зависимого возбудителя рассчитываем отношение текущего
 	// напряжения к исходному. Для независимого отношение 1.0
 	if (bVoltageDependent)
@@ -133,7 +133,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 
 	if (IsStateOn())
 	{
-		Eqsum = Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec;
+		Eqsum = Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec + Uaux;
 		// pick up Eq limiter state before disco
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial = EqLimit.GetCurrentState();
 

@@ -1496,7 +1496,7 @@ void CLoadFlow::UpdateQToGenerators()
 				// пропорционально нагрузке, иначе просто поровну
 				for (auto&& gen : QRangeGens)
 					if (Psum > 0.0)
-						gen->P *= gen->Kgen * pNode->Pgr / Psum;
+						gen->P *= gen->Kgen * std::abs(pNode->Pgr) / Psum;
 					else
 						gen->P = gen->Kgen * pNode->Pgr / QRangeGens.size();
 			}

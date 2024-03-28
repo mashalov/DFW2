@@ -509,6 +509,22 @@ eDFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 }
 
 
+eDFW2_ACTION_STATE CModelActionChangeDeviceVariable::Do(CDynaModel* pDynaModel)
+{
+	return eDFW2_ACTION_STATE::AS_DONE;
+}
+
+eDFW2_ACTION_STATE CModelActionChangeDeviceVariable::Do(CDynaModel* pDynaModel, double Value)
+{
+	if (pVariable_)
+	{
+		*pVariable_ = Value;
+		pDynaModel->DiscontinuityRequest(*pDevice_, DiscontinuityLevel::Light);
+	}
+	return eDFW2_ACTION_STATE::AS_DONE;
+}
+
+
 CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAction(eDFW2_ACTION_TYPE::AT_STATE),
 																	   pDiscreteDelay_(pDiscreteDelay)
 {

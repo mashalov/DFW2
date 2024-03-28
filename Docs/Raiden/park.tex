@@ -1,0 +1,108 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{tabularx}
+\usepackage{boldline}
+\usepackage{empheq}
+\usepackage{amssymb}
+%\usepackage[justification=centering]{caption}
+%\usepackage{hyperref}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+% updated with editorial comments 8/9/2021
+%\usepackage[russian]{babel}
+%\usepackage[utf8]{inputenc}
+%\usepackage{pscyr}
+\usepackage[T2A]{fontenc}
+
+\DeclareMathOperator*{\argmin}{arg\,min} % thin space, limits underneath in displays
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\makeatletter
+\def\endthebibliography{%
+	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+	\endlist
+}
+\makeatother
+
+\begin{document}
+	
+	\onecolumn
+	
+	%\title{Raiden. Power System Transient Stability Simulation Software Prototype}
+	
+	%\author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
+	
+	
+	%\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2021}%
+	%${Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+	
+	%\IEEEpubid{0000--0000/00\$00.00~\copyright~2021 IEEE}
+	% Remember, if you use this you must call \IEEEpubidadjcol in the second
+	% column for its text to clear the IEEEpubid mark.
+	
+	%\maketitle
+	
+	%\begin{abstract}
+	%This paper discusses implementation details of the transient stability analysis prototype %software "Raiden", based on the implicit integration scheme. The main advantages of an %implicit integration scheme with combined treatment of differential and algebraic variables %as well as an integration process with discrete event handling are considered. The results %of test simulations and their comparison with existing software are presented.
+	%\end{abstract}
+	
+	%\begin{IEEEkeywords}
+	%Transient Stability Analysis, Implicit Integration, Discontinuous DAE
+	%\end{IEEEkeywords}
+	
+	\section{Про то как изменение возбуждения влияет на активную мощность}
+	Система уравнений Парка, используемая в Raiden (совпадает с Eurostag, почти совпадает с Sauer-Pai и Kundur). 4 контура: возбуждение \(fd\), демпферы \(1d\), \(1q\), \(2q\)
+	\begin{subequations}
+		\label{park3c}
+		\begin{align}
+			e_d =& -R_ai_d - \omega_rL''_qi_q + \omega_r[E_d\Psi_{1q}]\Psi_{1q} + \omega_r[E_d\Psi_{2q}]\Psi_{2q} \label{eqn:line-1} \\
+			e_q =& -R_ai_q + \omega_rL''_di_d + \omega_r[E_q\Psi_{fd}]\Psi_{fd} + \omega_r[E_q\Psi_{1d}]\Psi_{1d} \label{eqn:line-2} \\
+			\frac{d\Psi_{fd}}{dt} =& e_{fd} + [\Psi_{fd}\Psi_{fd}]\Psi_{fd} + [\Psi_{fd}\Psi_{1d}]\Psi_{1d} + [\Psi_{fd}i_d]i_d \label{eqn:line-3} \\
+			\frac{d\Psi_{1d}}{dt} =& [\Psi_{1d}\Psi_{fd}]\Psi_{fd} + [\Psi_{1d}\Psi_{1d}]\Psi_{1d} + [\Psi_{1d}i_d]i_d \label{eqn:line-4} \\
+			\frac{d\Psi_{1q}}{dt} =& [\Psi_{1q}\Psi_{1q}]\Psi_{1q} + [\Psi_{1q}\Psi_{2q}]\Psi_{2q} + [\Psi_{1q}i_q]i_q \label{eqn:line-5} \\
+			\frac{d\Psi_{2q}}{dt} =& [\Psi_{2q}\Psi_{1q}]\Psi_{1q} + [\Psi_{2q}\Psi_{2q}]\Psi_{2q} + [\Psi_{2q}i_q]i_q \label{eqn:line-6} \\
+			\omega_r =& \frac{d\delta_g}{dt} \label{eqn:line-6} 
+		\end{align}
+		\label{eqn:all-lines}
+	\end{subequations}
+	Примем \(R_a=0\) и оставим на \(q\) только один демпфер. Любители точности их вводят в модели до 70 аж, если желают прям смоделировать турбогенератор во всех подробностях. Нам и один сойдет.\\
+	Активная мощность и момент:
+	\begin{equation}
+			P_e = e_di_d + e_qi_q = \omega_r(\Psi_di_q-\Psi_qi_d) = \omega_rT_e
+	\end{equation}
+	Момент рассматриваемой уже трехконтурной СМ без потерь в статоре:
+	\begin{equation}
+		\label{torque}
+		T_e = (L''_d - L''_q)i_di_q+[\Psi_{fd}\Psi_{fd}]\Psi_{fd}i_q+[\Psi_d\Psi_{1d}]\Psi_{1d}i_q - [\Psi_q\Psi_{1q}]\Psi_{1q}i_d
+	\end{equation}
+	Пусть \(\Delta e_{fd} > 0\) --- мы даем приращение ЭДС возбуждения. \(\Psi_{fd}\) начинает расти (\ref{eqn:line-3}). Коэффициент \([\Psi_{fd}\Psi_{fd}]\) в (\ref{torque}) обычно превышает все остальные, поэтому потокосцепление \(\Psi_{fd}\) вносит наибольший вклад в увеличение \(T_e\). Рост момента приводит к замедлению СМ и снижению угла. Изменение скорости компенсируют демпферные обмотки, однако именно в ситуации, когда изменяется \(e_{fd}\) продольная демпферная обмотка имеет сниженную эффективность, так как в нее трансформируется изменяющаяся ЭДС от обмотки возбуждения (\ref{eqn:line-4}) - причем ЭДС противоположна по знаку и ЭДС, наводимой в демпфере из-за отклонения скорости. Это, кстати проблема для быстродействующих систем возбуждения, поэтому добавляют PSS или ООС по углу/скольжению: "внешняя стабилизация", как называли это советские учёные. Если \(\Delta e_{fd} \rightarrow 0\) положение ротора изменяется, соответственно изменяются все потокосцепления и моменты первичного привода и электромагнитный вновь приходят в равновесие (если конечно СМ не теряет устойчивость). Ключевым фактором является скорость изменения \(e_{fd}\).
+	
+	\begin{figure}[h]	
+		\centering
+		\includegraphics[scale=0.2]{c:/tmp/fastex.png} \\
+			На рисунке мощность и потокосцепления СМ, на возбудитель которой подана ступенька. Возбудитель имеет постоянную \(10^{-3}\)с и отрабатывает ступеньку почти мгновенно, по сравнению со следующим примером.
+	\end{figure}
+
+	\begin{figure}[h]	
+	\centering
+	\includegraphics[scale=0.2]{c:/tmp/slowex.png} \\
+	Этот возбудитель имеет постоянную \(1\)с. Познавательно, что потокосцепления ведут себя почти одинаково, кроме начальной фазы возмущения (их-то постоянные времени не изменились), а вот изменение активной мощности меньше раз в 17.
+	\end{figure}
+	
+	\begin{figure}[h]	
+		\centering
+		\includegraphics[scale=0.2]{c:/tmp/slowexeqe.png} \\
+		И для наглядности выход возбудителя с постоянной \(1\)с.
+	\end{figure}
+\end{document}
+
+

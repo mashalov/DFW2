@@ -110,8 +110,16 @@ namespace DFW2
 	*/
 	class CModelActionChangeDeviceVariable : public CModelActionChangeDeviceParameter
 	{
+	protected:
+		double *pVariable_ = nullptr;
 	public:
 		CModelActionChangeDeviceVariable(CDevice* pDevice) : CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice) {}
+		CModelActionChangeDeviceVariable(CDevice* pDevice, std::string_view VariableName) : CModelActionChangeDeviceParameter(eDFW2_ACTION_TYPE::AT_CV, pDevice) 
+		{
+			pVariable_ = pDevice->GetConstVariablePtr(VariableName);
+		}
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
 
@@ -147,7 +155,7 @@ namespace DFW2
 	public:
 		CModelActionChangeBranchState(CDynaBranch *pBranch, CDynaBranch::BranchState NewState);
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
-		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value);
+		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 
 	//! Изменить комплексное сопротивление ветви
@@ -343,7 +351,7 @@ namespace DFW2
 			NewState_(NewState) { }
 
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
-		virtual eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 
 	using MODELACTIONLIST = std::list<ModelActionT>;
